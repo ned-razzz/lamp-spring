@@ -17,11 +17,6 @@ public class BibleController {
 
     private final BibleService bibleService;
 
-    @GetMapping("/books")
-    public void getBooks() {
-        log.info("GET /bible/books");
-    }
-
     @GetMapping("/books/{abbr}")
     public ResponseEntity<BookResponse> getBook(@PathVariable String abbr) {
         log.info("GET /bible/books/{}", abbr);
@@ -29,24 +24,22 @@ public class BibleController {
         return ResponseEntity.ok(bookDto);
     }
 
-    @GetMapping("/books/{abbr}/chapters/{chapter}")
-    public ResponseEntity<List<VerseResponse>> getVerses(
+    @GetMapping("/books/{abbr}/chapters/{chapter}/verses/range")
+    public List<VerseResponse> getVerses(
             @PathVariable String abbr,
             @PathVariable Short chapter,
             @RequestParam Short startVerse,
             @RequestParam Short endVerse) {
         log.info("GET /bible/books/{}/chapters/{}?startVerse={}&endVerse={}",abbr, chapter, startVerse, endVerse);
-        List<VerseResponse> verseDtoList = bibleService.readVersesRange(abbr, chapter, startVerse, endVerse);
-        return ResponseEntity.ok(verseDtoList);
+        return bibleService.readVersesRange(abbr, chapter, startVerse, endVerse);
     }
 
     @GetMapping("/books/{abbr}/chapters/{chapter}/verses/{verse}")
-    public ResponseEntity<VerseResponse> getVerse(
+    public VerseResponse getVerse(
             @PathVariable String abbr,
             @PathVariable Short chapter,
             @PathVariable Short verse) {
         log.info("GET /bible/books/{}/chapters/{}/verses/{}", abbr, chapter, verse);
-        VerseResponse verseDto = bibleService.readVerse(abbr, chapter, verse);
-        return ResponseEntity.ok(verseDto);
+        return bibleService.readVerse(abbr, chapter, verse);
     }
 }

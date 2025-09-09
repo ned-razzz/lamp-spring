@@ -32,7 +32,7 @@ public class BibleService {
 
     public VerseResponse readVerse(String abbr, Short chapter, Short verseIndex) {
         Book book = bookRepository.findByAbbr(abbr).orElseThrow();
-        Verse verse = verseRepository.findByBibleReference(book.getId(), chapter, verseIndex).orElseThrow();
+        Verse verse = verseRepository.findByBookAndChapterAndVerse(book.getId(), chapter, verseIndex).orElseThrow();
         return VerseResponse.builder()
                 .verse(verse.getIndex())
                 .text(verse.getText())
@@ -41,7 +41,7 @@ public class BibleService {
 
     public List<VerseResponse> readVersesRange(String abbr, Short chapter, Short startIndex, Short endIndex) {
         Book book = bookRepository.findByAbbr(abbr).orElseThrow();
-        List<Verse> verses = verseRepository.findByBibleReferenceRange(book.getId(), chapter, startIndex, endIndex);
+        List<Verse> verses = verseRepository.findVersesFrom(book.getId(), chapter, startIndex, endIndex);
         return verses.stream()
                 .map(verse -> VerseResponse.builder()
                         .verse(verse.getIndex())

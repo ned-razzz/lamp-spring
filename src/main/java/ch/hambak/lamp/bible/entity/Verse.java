@@ -17,9 +17,12 @@ public class Verse {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //todo: verse와 chapter 분리하기
     @Column(nullable = false)
     private Short chapter;
 
+    //todo: short 타입 전부 integer로 변경 (연산 시 타입 변경 때문)
+    //todo: index => ordinal로 변경
     @Column(nullable = false)
     private Short index;
 

@@ -24,7 +24,7 @@ public class VerseRepository {
         return Optional.ofNullable(verse);
     }
 
-    public Optional<Verse> findByBibleReference(Short bookId, Short chapter, Short verseIndex) {
+    public Optional<Verse> findByBookAndChapterAndVerse(Short bookId, Short chapter, Short verseIndex) {
         String jpql = """
                 select v
                 from Verse v
@@ -40,7 +40,7 @@ public class VerseRepository {
                 .findFirst();
     }
 
-    public List<Verse> findByBibleReferenceRange(Short bookId, Short chapter, Short startIndex, Short endIndex) {
+    public List<Verse> findVersesFrom(Short bookId, Short chapter, Short startIndex, Short endIndex) {
         String jpql = """
                 select v
                 from Verse v
@@ -56,5 +56,36 @@ public class VerseRepository {
                 .setParameter("startVerse", startIndex)
                 .setParameter("endVerse", endIndex)
                 .getResultList();
+    }
+
+    public Optional<Verse> findLastVerseFrom(Short bookId, Short chapter, Short startIndex, Short endIndex) {
+        String jpql = """
+                SELECT v FROM Verse v
+                WHERE v.book.id = :bookId
+                AND v.chapter = :chapter
+                AND v.index between :startVerse and :endVerse
+                ORDER BY v.index DESC
+                """;
+        return em.createQuery(jpql, Verse.class)
+                .setParameter("bookId", bookId)
+                .setParameter("chapter", chapter)
+                .setParameter("startVerse", startIndex)
+                .setParameter("endVerse", endIndex)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst();
+    }
+
+    public Long countByBookIdAndChapter(Short bookId, int chapter) {
+        String jpql = """
+                select count(v)
+                from Verse v
+                where v.book.id = :bookId
+                and v.chapter = :chapter
+                """;
+        return em.createQuery(jpql, Long.class)
+                .setParameter("bookId", bookId)
+                .setParameter("chapter", chapter)
+                .getSingleResult();
     }
 }
