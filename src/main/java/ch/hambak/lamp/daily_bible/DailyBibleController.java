@@ -2,6 +2,7 @@ package ch.hambak.lamp.daily_bible;
 
 import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
+import ch.hambak.lamp.daily_bible.service.DailyBibleApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

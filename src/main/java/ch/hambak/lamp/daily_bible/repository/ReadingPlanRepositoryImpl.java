@@ -1,4 +1,4 @@
-package ch.hambak.lamp.daily_bible;
+package ch.hambak.lamp.daily_bible.repository;
 
 import ch.hambak.lamp.daily_bible.entity.GlobalReadingPlan;
 import jakarta.persistence.EntityManager;
@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class ReadingPlanRepository {
+public class ReadingPlanRepositoryImpl implements ReadingPlanRepository {
     private final EntityManager em;
 
     public Long save(GlobalReadingPlan readingPlan) {

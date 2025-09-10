@@ -1,9 +1,10 @@
-package ch.hambak.lamp.daily_bible;
+package ch.hambak.lamp.daily_bible.service;
 
 import ch.hambak.lamp.bible.entity.Book;
 import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
 import ch.hambak.lamp.bible.service.BibleDomainService;
+import ch.hambak.lamp.daily_bible.repository.ReadingPlanRepository;
 import ch.hambak.lamp.daily_bible.dto.DailyVerseResponse;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
 import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
@@ -15,15 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
-public class DailyBibleApplicationService {
+public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationService {
     private final ReadingPlanRepository readingPlanRepository;
-
     private final BibleDomainService bibleService;
 
     /**
