@@ -10,6 +10,7 @@ import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
 import ch.hambak.lamp.daily_bible.entity.GlobalReadingPlan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,7 @@ public class DailyBibleApplicationService {
      * - 절 -> 장 -> 책 순으로 넘어가며, 성경 전체를 다 읽으면 창세기로 순환합니다.
      * - 이 메소드는 스케줄러에 의해 매일 자정에 호출되어야 합니다.
      */
+    @Scheduled(cron = "3 0 0 * * ?", zone = "Asia/Seoul")
     @Transactional
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
