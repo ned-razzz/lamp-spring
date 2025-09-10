@@ -27,5 +27,5 @@ public class BookResponse {
     private String abbrEng;
 
     @NotNull
-    private Short bookOrder;
+    private Integer bookOrder;
 }

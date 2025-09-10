@@ -16,14 +16,14 @@ public class GlobalReadingPlan {
     private Long id;
 
     @Column(nullable = false)
-    private Short amountPerDay;
+    private Integer amountPerDay;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "verse_id")
     private Verse verse;
 
     //== Business Logic ==//
-    public void update(Verse verse, Short amountPerDay) {
+    public void update(Verse verse, Integer amountPerDay) {
         this.verse = verse;
         //todo: Assert 구문으로 대체하기
         if (amountPerDay != null) {

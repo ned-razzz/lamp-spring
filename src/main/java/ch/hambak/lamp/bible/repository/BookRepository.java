@@ -8,30 +8,29 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-//todo: 모든 JPQL 문 대문자 처리하기
 @Repository
 @RequiredArgsConstructor
 public class BookRepository {
 
     private final EntityManager em;
 
-    public Short save(Book book) {
+    public Long save(Book book) {
         em.persist(book);
         return book.getId();
     }
 
     public List<Book> findAll() {
-        return em.createQuery("select b from Book b", Book.class)
+        return em.createQuery("SELECT b FROM Book b", Book.class)
                 .getResultList();
     }
 
-    public Optional<Book> findById(Short id) {
+    public Optional<Book> findById(Long id) {
         Book book = em.find(Book.class, id);
         return Optional.ofNullable(book);
     }
 
     public Optional<Book> findByAbbr(String abbr) {
-        String jpql = "select b from Book b where b.abbrEng = :abbr";
+        String jpql = "SELECT b FROM Book b WHERE b.abbrEng = :abbr";
         return em.createQuery(jpql, Book.class)
                 .setParameter("abbr", abbr)
                 .getResultStream()
@@ -39,31 +38,31 @@ public class BookRepository {
     }
 
     /**
-     * 현재 bookOrder보다 큰 값 중 가장 작은 bookOrder를 가진 Book을 찾습니다.
-     * @param bookOrder 현재 책의 순서
+     * 현재 sequence보다 큰 값 중 가장 작은 sequence 가진 Book을 찾습니다.
+     * @param sequence 현재 책의 순서
      * @return 다음 책 (Optional)
      */
-    public Optional<Book> findTopByBookOrderGreaterThanOrderByBookOrderAsc(Short bookOrder) {
+    public Optional<Book> findTopBySequenceGreaterThanOrderBySequenceAsc(int sequence) {
         String jpql = """
                 SELECT b FROM Book b
-                WHERE b.bookOrder > :bookOrder
-                ORDER BY b.bookOrder ASC
+                WHERE b.sequence > :sequence
+                ORDER BY b.sequence ASC
                 """;
         return em.createQuery(jpql, Book.class)
-                .setParameter("bookOrder", bookOrder)
+                .setParameter("sequence", sequence)
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst();
     }
 
     /**
-     * 가장 작은 bookOrder를 가진 Book을 찾습니다.
+     * 가장 작은 sequence를 가진 Book을 찾습니다.
      * @return 첫 번째 책 (Optional)
      */
-    public Optional<Book> findTopByOrderByBookOrderAsc() {
+    public Optional<Book> findTopByOrderBySequenceAsc() {
         String jpql = """
                 SELECT b FROM Book b
-                ORDER BY book_order ASC
+                ORDER BY b.sequence ASC
                 """;
         return em.createQuery(jpql, Book.class)
                 .setMaxResults(1)

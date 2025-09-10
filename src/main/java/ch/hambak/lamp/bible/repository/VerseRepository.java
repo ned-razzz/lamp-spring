@@ -24,68 +24,69 @@ public class VerseRepository {
         return Optional.ofNullable(verse);
     }
 
-    public Optional<Verse> findByBookAndChapterAndVerse(Short bookId, Short chapter, Short verseIndex) {
+    public Optional<Verse> findByBookAndChapterAndVerse(Long bookId, Long chapterId, Integer ordinal) {
         String jpql = """
-                select v
-                from Verse v
-                where v.book.id = :bookId
-                and v.chapter = :chapter
-                and v.index = :verse
+                SELECT v
+                FROM Verse v JOIN v.chapter c
+                WHERE c.book.id = :bookId
+                AND c.id = :chapterId
+                AND v.ordinal = :verse
                 """;
         return em.createQuery(jpql, Verse.class)
                 .setParameter("bookId", bookId)
-                .setParameter("chapter", chapter)
-                .setParameter("verse", verseIndex)
+                .setParameter("chapterId", chapterId)
+                .setParameter("verse", ordinal)
                 .getResultStream()
                 .findFirst();
     }
 
-    public List<Verse> findVersesFrom(Short bookId, Short chapter, Short startIndex, Short endIndex) {
+    public List<Verse> findVersesFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal) {
         String jpql = """
-                select v
-                from Verse v
-                where v.book.id = :bookId
-                and v.chapter = :chapter
-                and v.index between :startVerse and :endVerse
-                order by v.index asc
+                SELECT v
+                FROM Verse v JOIN v.chapter c
+                WHERE c.book.id = :bookId
+                AND c.id = :chapterId
+                AND v.ordinal BETWEEN :startVerse AND :endVerse
+                ORDER BY v.ordinal ASC
                 """;
 
         return em.createQuery(jpql, Verse.class)
                 .setParameter("bookId", bookId)
-                .setParameter("chapter", chapter)
-                .setParameter("startVerse", startIndex)
-                .setParameter("endVerse", endIndex)
+                .setParameter("chapterId", chapterId)
+                .setParameter("startVerse", startOrdinal)
+                .setParameter("endVerse", endOrdinal)
                 .getResultList();
     }
 
-    public Optional<Verse> findLastVerseFrom(Short bookId, Short chapter, Short startIndex, Short endIndex) {
+    public Optional<Verse> findLastVerseFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal) {
         String jpql = """
-                SELECT v FROM Verse v
-                WHERE v.book.id = :bookId
-                AND v.chapter = :chapter
-                AND v.index between :startVerse and :endVerse
-                ORDER BY v.index DESC
+                SELECT v
+                FROM Verse v JOIN v.chapter c
+                WHERE c.book.id = :bookId
+                AND c.id = :chapterId
+                AND v.ordinal BETWEEN :startVerse AND :endVerse
+                ORDER BY v.ordinal DESC
                 """;
         return em.createQuery(jpql, Verse.class)
                 .setParameter("bookId", bookId)
-                .setParameter("chapter", chapter)
-                .setParameter("startVerse", startIndex)
-                .setParameter("endVerse", endIndex)
+                .setParameter("chapterId", chapterId)
+                .setParameter("startVerse", startOrdinal)
+                .setParameter("endVerse", endOrdinal)
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst();
     }
 
-    public Long countByBookIdAndChapter(Short bookId, int chapter) {
+    public Integer countByBookIdAndChapter(Long bookId, int chapterOrdinal) {
         String jpql = """
-                select count(v)
-                from Verse v
-                where v.book.id = :bookId
-                and v.chapter = :chapter
+                SELECT COUNT(v)
+                FROM Verse v JOIN v.chapter c
+                WHERE c.book.id = :bookId
+                AND c.ordinal = :chapter
                 """;
-        return em.createQuery(jpql, Long.class)
+        return em.createQuery(jpql, Integer.class)
                 .setParameter("bookId", bookId)
-                .setParameter("chapter", chapter)
+                .setParameter("chapter", chapterOrdinal)
                 .getSingleResult();
     }
 }

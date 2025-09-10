@@ -1,8 +1,10 @@
 package ch.hambak.lamp.daily_bible;
 
 import ch.hambak.lamp.bible.entity.Book;
+import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
 import ch.hambak.lamp.bible.repository.BookRepository;
+import ch.hambak.lamp.bible.repository.ChapterRepository;
 import ch.hambak.lamp.bible.repository.VerseRepository;
 import ch.hambak.lamp.daily_bible.dto.DailyVerseResponse;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
@@ -25,6 +27,7 @@ public class DailyBibleService {
 
     //todo: 다른 도메인의 repository 의존을 service 의존으로 변경
     private final BookRepository bookRepository;
+    private final ChapterRepository chapterRepository;
     private final VerseRepository verseRepository;
 
     /**
@@ -36,7 +39,8 @@ public class DailyBibleService {
     public TodayBibleResponse readTodayVerses() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse currentVerse = readingPlan.getVerse();
-        Book currentBook = currentVerse.getBook();
+        Chapter currentChapter = currentVerse.getChapter();
+        Book currentBook = currentChapter.getBook();
 
 //        Long verseSize = verseRepository.countByBookIdAndChapter(currentBook.getId(), currentVerse.getChapter());
 //        int restVerseSize = (int) (verseSize - currentVerse.getIndex());
@@ -49,20 +53,20 @@ public class DailyBibleService {
 
         List<Verse> verses = verseRepository.findVersesFrom(
                 currentBook.getId(),
-                currentVerse.getChapter(),
-                currentVerse.getIndex(),
-                (short) (currentVerse.getIndex() + readingPlan.getAmountPerDay() - 1));
+                currentChapter.getId(),
+                currentVerse.getOrdinal(),
+                (currentVerse.getOrdinal() + readingPlan.getAmountPerDay() - 1));
 
         List<DailyVerseResponse> verseDataList = verses.stream()
                 .map(verse -> DailyVerseResponse.builder()
-                        .index(verse.getIndex())
+                        .ordinal(verse.getOrdinal())
                         .text(verse.getText())
                         .build())
                 .toList();
 
         return TodayBibleResponse.builder()
                 .bookName(currentBook.getName())
-                .chapter(currentVerse.getChapter())
+                .chapter(currentVerse.getChapter().getOrdinal())
                 .verses(verseDataList)
                 .build();
     }
@@ -78,14 +82,16 @@ public class DailyBibleService {
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse currentVerse = readingPlan.getVerse();
-        Short amountPerDay = readingPlan.getAmountPerDay();
+        Chapter currentChapter = currentVerse.getChapter();
+        Book currentBook = currentChapter.getBook();
+        Integer amountPerDay = readingPlan.getAmountPerDay();
 
         // 오늘 읽은 마지막 절을 찾습니다.
         Verse endVerse = verseRepository.findLastVerseFrom(
-                        currentVerse.getBook().getId(),
-                        currentVerse.getChapter(),
-                        currentVerse.getIndex(),
-                        (short) (currentVerse.getIndex() + amountPerDay - 1))
+                        currentBook.getId(),
+                        currentChapter.getId(),
+                        currentVerse.getOrdinal(),
+                        currentVerse.getOrdinal() + amountPerDay - 1)
                 .orElseThrow();
 
         // 다음 날 시작할 절을 찾습니다.
@@ -94,34 +100,36 @@ public class DailyBibleService {
         readingPlan.update(nextVerse, null);
     }
 
-    public Verse findNextVerse(Verse currentVerse) {
-        Optional<Verse> nextVerse = verseRepository.findByBookAndChapterAndVerse(
-                currentVerse.getBook().getId(),
-                currentVerse.getChapter(),
-                (short) (currentVerse.getIndex() + 1));
-        log.info("next verse: {} {} {}", currentVerse.getBook().getId(), currentVerse.getChapter(), (short) (currentVerse.getIndex() + 1));
-        if (nextVerse.isPresent()) {
-            return nextVerse.get();
+    //todo: 해당 코드 bible 도메인에 이전
+    public Verse findNextVerse(Verse verse) {
+        Chapter chapter = verse.getChapter();
+        Book book = chapter.getBook();
+
+        Optional<Verse> nextVerse1 = verseRepository.findByBookAndChapterAndVerse(
+                book.getId(),
+                chapter.getId(),
+                verse.getOrdinal() + 1);
+        if (nextVerse1.isPresent()) {
+            return nextVerse1.get();
         }
 
-        Optional<Verse> nextChapterVerse = verseRepository.findByBookAndChapterAndVerse(
-                currentVerse.getBook().getId(),
-                (short) (currentVerse.getChapter() + 1),
-                (short) 1);
-        log.info("next chapter: {}", nextChapterVerse.isPresent());
-        if (nextChapterVerse.isPresent()) {
-            return nextChapterVerse.get();
+        Optional<Chapter> nextChapter = chapterRepository.findByBookIdAndOrdinal(book.getId(), chapter.getOrdinal() + 1);
+        if (nextChapter.isPresent()) {
+            return verseRepository.findByBookAndChapterAndVerse(
+                    book.getId(),
+                    nextChapter.get().getId(),
+                    1).orElseThrow();
         }
 
         //todo: 해당 코드 BookService 메서드로 이전
-        Book nextBook = bookRepository.findTopByBookOrderGreaterThanOrderByBookOrderAsc(currentVerse.getBook().getBookOrder())
-                .orElseGet(() -> bookRepository.findTopByOrderByBookOrderAsc().orElseThrow());
+        Book nextBook = bookRepository.findTopBySequenceGreaterThanOrderBySequenceAsc(book.getSequence())
+                .orElseGet(() -> bookRepository.findTopByOrderBySequenceAsc().orElseThrow());
+        Chapter nextBookChapter = chapterRepository.findByBookIdAndOrdinal(nextBook.getId(), 1).orElseThrow();
 
         return verseRepository.findByBookAndChapterAndVerse(
-                        nextBook.getId(),
-                        (short) 1,
-                        (short) 1)
-                .orElseThrow();
+                nextBook.getId(),
+                nextBookChapter.getId(),
+                1).orElseThrow();
     }
 
 
@@ -133,13 +141,15 @@ public class DailyBibleService {
     public void updatePlan(ReadingPlanUpdateRequest updateRequest) {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Book book = bookRepository.findByAbbr(updateRequest.getBookAbbr()).orElseThrow();
+        Chapter chapter = chapterRepository.findByBookIdAndOrdinal(book.getId(), updateRequest.getChapter()).orElseThrow();
 
+        log.info("data = {} {} {}", book.getId(), chapter.getId(), updateRequest.getVerse());
         Verse verse = verseRepository.findByBookAndChapterAndVerse(
                         book.getId(),
-                        updateRequest.getChapter(),
-                        updateRequest.getVerseIndex())
+                        chapter.getId(),
+                        updateRequest.getVerse())
                 .orElseThrow();
 
-        readingPlan.update(verse, updateRequest.getAmount());
+        readingPlan.update(verse, updateRequest.getCountPerDay());
     }
 }

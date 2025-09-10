@@ -5,25 +5,28 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"chapter_id", "ordinal"})
+        @UniqueConstraint(columnNames = {"book_id", "ordinal"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Verse {
+public class Chapter {
     @Id
-    @Column(name = "verse_id")
+    @Column(name = "chapter_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private Integer ordinal;
 
-    @Column(nullable = false)
-    private String text;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chapter_id", nullable = false)
-    private Chapter chapter;
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
+
+    @OneToMany(mappedBy = "chapter", fetch = FetchType.LAZY)
+    private List<Verse> verses = new ArrayList<>();
 }

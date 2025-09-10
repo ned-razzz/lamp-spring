@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class VerseResponse {
 
     @NotNull
-    private Short verse;
+    private Integer verse;
 
     @NotBlank
     private String text;

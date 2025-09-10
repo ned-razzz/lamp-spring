@@ -12,7 +12,7 @@ public class Book {
     @Id
     @Column(name = "book_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Short id;
+    private Long id;
 
     @Column(length = 20, nullable = false, unique = true)
     private String name;
@@ -24,5 +24,5 @@ public class Book {
     private String abbrEng;
 
     @Column(nullable = false, unique = true)
-    private Short bookOrder;
+    private Integer sequence;
 }

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class DailyVerseResponse {
 
     @NotNull
-    private Short index;
+    private Integer ordinal;
 
     @NotBlank
     private String text;

@@ -16,11 +16,12 @@ public class ReadingPlanUpdateRequest {
     @Size(max = 5)
     String bookAbbr;
 
+    //todo: 변수명에 ordinal 추가하기
     @NotNull
-    Short chapter;
+    Integer chapter;
 
     @NotNull
-    Short verseIndex;
+    Integer verse;
 
-    Short amount;
+    Integer countPerDay;
 }
