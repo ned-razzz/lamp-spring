@@ -1,4 +1,4 @@
-package ch.hambak.lamp.bible;
+package ch.hambak.lamp.bible.service;
 
 import ch.hambak.lamp.bible.dto.BookResponse;
 import ch.hambak.lamp.bible.dto.VerseResponse;
@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class BibleService {
+public class BibleApplicationService {
 
     private final BookRepository bookRepository;
     private final ChapterRepository chapterRepository;

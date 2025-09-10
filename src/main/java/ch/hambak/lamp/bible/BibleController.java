@@ -2,6 +2,7 @@ package ch.hambak.lamp.bible;
 
 import ch.hambak.lamp.bible.dto.BookResponse;
 import ch.hambak.lamp.bible.dto.VerseResponse;
+import ch.hambak.lamp.bible.service.BibleApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BibleController {
 
-    private final BibleService bibleService;
+    private final BibleApplicationService bibleService;
 
     @GetMapping("/books/{abbr}")
     public ResponseEntity<BookResponse> getBook(@PathVariable String abbr) {

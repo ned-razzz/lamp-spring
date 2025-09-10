@@ -59,4 +59,16 @@ public class ChapterRepository {
                 .setParameter("bookId", bookId)
                 .getSingleResult();
     }
+
+    public Integer countVersesByChapter(long chapterId) {
+        String jpql = """
+                SELECT COUNT(v)
+                FROM Verse v JOIN v.chapter c
+                WHERE c.id = :chapterId
+                """;
+        return em.createQuery(jpql, Long.class)
+                .setParameter("chapterId", chapterId)
+                .getSingleResult()
+                .intValue();
+    }
 }

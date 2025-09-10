@@ -76,17 +76,4 @@ public class VerseRepository {
                 .getResultStream()
                 .findFirst();
     }
-
-    public Integer countByBookIdAndChapter(Long bookId, int chapterOrdinal) {
-        String jpql = """
-                SELECT COUNT(v)
-                FROM Verse v JOIN v.chapter c
-                WHERE c.book.id = :bookId
-                AND c.ordinal = :chapter
-                """;
-        return em.createQuery(jpql, Integer.class)
-                .setParameter("bookId", bookId)
-                .setParameter("chapter", chapterOrdinal)
-                .getSingleResult();
-    }
 }

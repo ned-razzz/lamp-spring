@@ -21,7 +21,7 @@ public class TodayBibleResponse {
     private String bookName;
 
     @NotNull
-    private Integer chapter;
+    private Integer chapterOrdinal;
 
     @NotEmpty
     private List<DailyVerseResponse> verses;

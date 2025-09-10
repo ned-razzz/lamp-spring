@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class DailyBibleController {
-    private final DailyBibleService dailyBibleService;
+    private final DailyBibleApplicationService dailyBibleService;
 
     @GetMapping("/today")
     public TodayBibleResponse getDailyBible() {
