@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -33,15 +35,16 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
      */
     public TodayBibleResponse readTodayVerses() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
-        Verse currentVerse = readingPlan.getVerse();
-        Chapter currentChapter = currentVerse.getChapter();
+        Verse startVerse = readingPlan.getStartVerse();
+        Verse endVerse = readingPlan.getEndVerse();
+        Chapter currentChapter = startVerse.getChapter();
         Book currentBook = currentChapter.getBook();
 
         List<Verse> verses = bibleService.findVersesFrom(
                 currentBook.getId(),
                 currentChapter.getId(),
-                currentVerse.getOrdinal(),
-                (currentVerse.getOrdinal() + readingPlan.getAmountPerDay() - 1));
+                startVerse.getOrdinal(),
+                endVerse.getOrdinal());
 
         List<DailyVerseResponse> verseDataList = verses.stream()
                 .map(verse -> DailyVerseResponse.builder()
@@ -52,7 +55,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
 
         return TodayBibleResponse.builder()
                 .bookName(currentBook.getName())
-                .chapterOrdinal(currentVerse.getChapter().getOrdinal())
+                .chapterOrdinal(currentChapter.getOrdinal())
                 .verses(verseDataList)
                 .build();
     }
@@ -68,26 +71,10 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     @Transactional
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
-        Verse currentVerse = readingPlan.getVerse();
-        Chapter currentChapter = currentVerse.getChapter();
-        Book currentBook = currentChapter.getBook();
-        Integer amountPerDay = readingPlan.getAmountPerDay();
-
-        // 오늘 읽은 마지막 절을 찾습니다.
-        Verse endVerse = bibleService.findVerse(
-                        currentBook.getId(),
-                        currentChapter.getId(),
-                        currentVerse.getOrdinal() + amountPerDay - 1)
-                // endOrdinal이 절 수를 초과했다면 장의 마지막 절을 반환
-                .or(() -> bibleService.findVerse(
-                        currentBook.getId(),
-                        currentChapter.getId(),
-                        bibleService.countVerses(currentChapter.getId())))
-                .orElseThrow();
-
-        // 다음 날 시작할 절을 찾습니다.
-        Verse nextVerse = bibleService.findNextVerse(endVerse);
-        readingPlan.update(nextVerse, null);
+        Verse endVerse = readingPlan.getEndVerse();
+        Verse nextStartVerse = bibleService.findNextVerse(endVerse);
+        Verse nextEndVerse = findVerseAfter(nextStartVerse, readingPlan.getCountPerDay());
+        readingPlan.update(nextStartVerse, nextEndVerse, null, null);
     }
 
     /**
@@ -99,11 +86,48 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Book book = bibleService.findBook(updateRequest.getBookAbbr()).orElseThrow();
         Chapter chapter = bibleService.findChapter(book.getId(), updateRequest.getChapterOrdinal()).orElseThrow();
-        Verse verse = bibleService.findVerse(
+        Verse startVerse = bibleService.findVerse(
                         book.getId(),
                         chapter.getId(),
                         updateRequest.getVerseOrdinal())
                 .orElseThrow();
-        readingPlan.update(verse, updateRequest.getCountPerDay());
+
+        //끝 절 찯기
+        Integer count = Objects.requireNonNullElse(updateRequest.getCountPerDay(), readingPlan.getCountPerDay());
+        Verse endVerse = findVerseAfter(startVerse, count);
+
+        readingPlan.update(startVerse, endVerse, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
+    }
+
+    //todo: bible service로 이동
+    private Verse findVerseAfter(Verse currentVerse, int offset) {
+        GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
+        Chapter currentChapter = currentVerse.getChapter();
+        Book currentBook = currentChapter.getBook();
+        int lastVerseOrdinal = bibleService.countVerses(currentChapter.getId());
+
+        Optional<Verse> afterVerse = bibleService.findVerse(currentBook.getId(),
+                currentChapter.getId(),
+                currentVerse.getOrdinal() + offset - 1);
+
+        // 성경 읽기 범위의 끝 절이 해당 장의 절 길이를 초과했을 시, 장의 마지막 절 반환
+        if (afterVerse.isEmpty()) {
+            return bibleService.findVerse(currentBook.getId(),
+                            currentChapter.getId(),
+                            lastVerseOrdinal)
+                    .orElseThrow();
+        }
+
+        // 해당 장의 남은 절의 수가 3개 이하일 시 그냥 남은 절까지 전부 범위에 포함시킨다
+        if (lastVerseOrdinal - currentVerse.getOrdinal() <= readingPlan.getVersesLeftThreshold()) {
+            if (afterVerse.get().getOrdinal() != lastVerseOrdinal) {
+                return bibleService.findVerse(currentBook.getId(),
+                                currentChapter.getId(),
+                                lastVerseOrdinal)
+                        .orElseThrow();
+            }
+        }
+
+        return afterVerse.get();
     }
 }

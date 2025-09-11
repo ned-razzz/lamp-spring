@@ -5,8 +5,10 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Check;
 
 @Entity
+@Check(constraints = "count_per_day >= 1")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GlobalReadingPlan {
@@ -16,18 +18,31 @@ public class GlobalReadingPlan {
     private Long id;
 
     @Column(nullable = false)
-    private Integer amountPerDay;
+    private Integer countPerDay;
+
+    @Column(nullable = false)
+    private Integer versesLeftThreshold;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "verse_id")
-    private Verse verse;
+    @JoinColumn(name = "start_verse_id")
+    private Verse startVerse;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "end_verse_id")
+    private Verse endVerse;
 
     //== Business Logic ==//
-    public void update(Verse verse, Integer amountPerDay) {
-        this.verse = verse;
+    public void update(Verse startVerse, Verse endVerse, Integer countPerDay, Integer chapterTailThreshold) {
+        this.startVerse = startVerse;
+        this.endVerse = endVerse;
+
         //todo: Assert 구문으로 대체하기
-        if (amountPerDay != null) {
-            this.amountPerDay = amountPerDay;
+        if (countPerDay != null) {
+            this.countPerDay = countPerDay;
+        }
+
+        if (chapterTailThreshold != null) {
+            this.versesLeftThreshold = chapterTailThreshold;
         }
     }
 }

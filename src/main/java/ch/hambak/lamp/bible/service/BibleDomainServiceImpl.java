@@ -18,6 +18,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
+//todo: 도메인 서비스가 Entity를 반환하지 않고 DTO를 반환하도록 변경
 public class BibleDomainServiceImpl implements BibleDomainService {
 
     private final BookRepositoryImpl bookRepository;
@@ -49,7 +50,6 @@ public class BibleDomainServiceImpl implements BibleDomainService {
         return verseRepository.findVersesFrom(bookId, chapterId, startOrdinal, endOrdinal);
     }
 
-    //todo: 해당 코드 bible 도메인에 이전
     public Verse findNextVerse(Verse verse) {
         Chapter chapter = verse.getChapter();
         Book book = chapter.getBook();

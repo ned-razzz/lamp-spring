@@ -18,6 +18,7 @@ public class ReadingPlanRepositoryImpl implements ReadingPlanRepository {
     }
 
     public Optional<GlobalReadingPlan> find() {
+        //todo: 성능 최적화 위해서 verse, chapter, book 관련 데이터까지 한번에 호출
         return em.createQuery("select p from GlobalReadingPlan p", GlobalReadingPlan.class)
                 .getResultStream()
                 .findFirst();
