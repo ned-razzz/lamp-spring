@@ -18,8 +18,17 @@ public class ReadingPlanRepositoryImpl implements ReadingPlanRepository {
     }
 
     public Optional<GlobalReadingPlan> find() {
-        //todo: 성능 최적화 위해서 verse, chapter, book 관련 데이터까지 한번에 호출
-        return em.createQuery("select p from GlobalReadingPlan p", GlobalReadingPlan.class)
+        String jpql = """
+                SELECT p
+                FROM GlobalReadingPlan p
+                JOIN FETCH p.startVerse sv
+                JOIN FETCH sv.chapter sc
+                JOIN FETCH sc.book sb
+                JOIN FETCH p.endVerse ev
+                JOIN FETCH ev.chapter ec
+                JOIN FETCH ec.book eb
+                """;
+        return em.createQuery(jpql, GlobalReadingPlan.class)
                 .getResultStream()
                 .findFirst();
     }
