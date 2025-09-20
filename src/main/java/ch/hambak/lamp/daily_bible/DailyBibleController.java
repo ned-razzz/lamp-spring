@@ -3,6 +3,7 @@ package ch.hambak.lamp.daily_bible;
 import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
 import ch.hambak.lamp.daily_bible.service.DailyBibleApplicationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -16,19 +17,16 @@ public class DailyBibleController {
 
     @GetMapping("/today")
     public TodayBibleResponse getDailyBible() {
-        log.info("/api/daily-bible/today");
         return dailyBibleService.readTodayVerses();
     }
 
     @PatchMapping("/admin/update")
     public void patchReadingPlan(@RequestBody ReadingPlanUpdateRequest updateRequest) {
-        log.info("/api/daily-bible/admin/update");
         dailyBibleService.updatePlan(updateRequest);
     }
 
     @PostMapping("/admin/next-day")
     public void advanceDailyBible() {
-        log.info("/api/daily-bible/admin/next-day");
         dailyBibleService.advanceToNextDay();
     }
 }

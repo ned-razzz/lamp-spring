@@ -20,7 +20,6 @@ public class BibleController {
 
     @GetMapping("/books/{abbr}")
     public ResponseEntity<BookResponse> getBook(@PathVariable String abbr) {
-        log.info("GET /bible/books/{}", abbr);
         BookResponse bookDto = bibleService.readBook(abbr);
         return ResponseEntity.ok(bookDto);
     }
@@ -31,7 +30,6 @@ public class BibleController {
             @PathVariable Short chapter,
             @RequestParam Short startVerse,
             @RequestParam Short endVerse) {
-        log.info("GET /bible/books/{}/chapters/{}?startVerse={}&endVerse={}",abbr, chapter, startVerse, endVerse);
         return bibleService.readVersesRange(abbr, chapter, startVerse, endVerse);
     }
 
@@ -40,7 +38,6 @@ public class BibleController {
             @PathVariable String abbr,
             @PathVariable Short chapter,
             @PathVariable Short verse) {
-        log.info("GET /bible/books/{}/chapters/{}/verses/{}", abbr, chapter, verse);
         return bibleService.readVerse(abbr, chapter, verse);
     }
 }
