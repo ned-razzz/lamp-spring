@@ -14,6 +14,7 @@ import org.hibernate.annotations.Check;
 public class GlobalReadingPlan {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "global_reading_plan_id")
     private Long id;
 

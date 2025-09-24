@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/daily-bible")
+@RequestMapping("/api/v1/daily-bible")
 @Slf4j
 @RequiredArgsConstructor
 public class DailyBibleController {
