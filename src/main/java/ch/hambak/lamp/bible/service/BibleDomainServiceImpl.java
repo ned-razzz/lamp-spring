@@ -1,12 +1,15 @@
 package ch.hambak.lamp.bible.service;
 
+import ch.hambak.lamp.bible.dto.BookDto;
+import ch.hambak.lamp.bible.dto.ChapterDto;
+import ch.hambak.lamp.bible.dto.VerseDto;
 import ch.hambak.lamp.bible.entity.Book;
 import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
-import ch.hambak.lamp.bible.repository.BookRepositoryImpl;
-import ch.hambak.lamp.bible.repository.ChapterRepositoryImpl;
-import ch.hambak.lamp.bible.repository.VerseRepositoryImpl;
-import ch.hambak.lamp.daily_bible.entity.GlobalReadingPlan;
+import ch.hambak.lamp.bible.repository.BookRepository;
+import ch.hambak.lamp.bible.repository.ChapterRepository;
+import ch.hambak.lamp.bible.repository.VerseRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,102 +22,140 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
-//todo: 도메인 서비스가 Entity를 반환하지 않고 DTO를 반환하도록 변경
 public class BibleDomainServiceImpl implements BibleDomainService {
 
-    private final BookRepositoryImpl bookRepository;
-    private final ChapterRepositoryImpl chapterRepository;
-    private final VerseRepositoryImpl verseRepository;
+    private final BookRepository bookRepository;
+    private final ChapterRepository chapterRepository;
+    private final VerseRepository verseRepository;
 
-    public Optional<Book> findBook(String abbr) {
-        return bookRepository.findByAbbr(abbr);
+    @Override
+    public Verse findVerseEntityById(Long verseId) {
+        return verseRepository.findById(verseId)
+                .orElseThrow(() -> new EntityNotFoundException("Verse not found with id: " + verseId));
     }
 
-    public Optional<Book> findNextBook(int currentSequence) {
+    @Override
+    public BookDto findBook(String abbr) {
+        return bookRepository.findByAbbr(abbr)
+                .map(this::bookToDto)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with abbr: " + abbr));
+    }
+
+    @Override
+    public BookDto findNextBook(int currentSequence) {
         return bookRepository.findTopBySequenceGreaterThanOrderBySequenceAsc(currentSequence)
-                .or(bookRepository::findTopByOrderBySequenceAsc);
+                .or(bookRepository::findTopByOrderBySequenceAsc)
+                .map(this::bookToDto)
+                .orElseThrow(() -> new IllegalStateException("Cannot find any book."));
     }
 
-    public Optional<Chapter> findChapter(long bookId, int ordinal) {
-        return chapterRepository.findByBookIdAndOrdinal(bookId, ordinal);
+    @Override
+    public ChapterDto findChapter(long bookId, int ordinal) {
+        return chapterRepository.findByBookIdAndOrdinal(bookId, ordinal)
+                .map(this::chapterToDto)
+                .orElseThrow(() -> new IllegalArgumentException("Chapter not found"));
     }
 
+    @Override
     public int countVerses(long chapterId) {
         return verseRepository.countVersesByChapter(chapterId);
     }
 
-    public Optional<Verse> findVerse(long bookId, long chapterId, int ordinal) {
-        return verseRepository.findByBookAndChapterAndVerse(bookId, chapterId, ordinal);
+    @Override
+    public VerseDto findVerse(long bookId, long chapterId, int ordinal) {
+        return verseRepository.findByBookAndChapterAndVerse(bookId, chapterId, ordinal)
+                .map(this::verseToDto)
+                .orElseThrow(() -> new IllegalArgumentException("Verse not found"));
     }
 
-    public List<Verse> findVersesFrom(long bookId, long chapterId, int startOrdinal, int endOrdinal) {
-        return verseRepository.findVersesFrom(bookId, chapterId, startOrdinal, endOrdinal);
+    @Override
+    public List<VerseDto> findVersesFrom(long bookId, long chapterId, int startOrdinal, int endOrdinal) {
+        return verseRepository.findVersesFrom(bookId, chapterId, startOrdinal, endOrdinal)
+                .stream()
+                .map(this::verseToDto)
+                .toList();
     }
 
-    public Verse findNextVerse(Verse verse) {
+    @Override
+    public VerseDto findNextVerse(long verseId) {
+        Verse verse = verseRepository.findById(verseId)
+                .orElseThrow(() -> new IllegalArgumentException("Verse not found with id: " + verseId));
         Chapter chapter = verse.getChapter();
         Book book = chapter.getBook();
 
-        // find next verse
-        Optional<Verse> nextVerse = findVerse(
-                book.getId(),
-                chapter.getId(),
-                verse.getOrdinal() + 1);
+        // 1. Find next verse in the same chapter
+        Optional<Verse> nextVerse = verseRepository.findByBookAndChapterAndVerse(
+                book.getId(), chapter.getId(), verse.getOrdinal() + 1);
         if (nextVerse.isPresent()) {
-            return nextVerse.get();
+            return verseToDto(nextVerse.get());
         }
 
-        // If the verse is last, find next verse in next chapter
-        Optional<Chapter> nextChapter = findChapter(book.getId(), chapter.getOrdinal() + 1);
+        // 2. If not found, find the first verse of the next chapter
+        Optional<Chapter> nextChapter = chapterRepository.findByBookIdAndOrdinal(book.getId(), chapter.getOrdinal() + 1);
         if (nextChapter.isPresent()) {
-            return findVerse(
-                            book.getId(),
-                            nextChapter.get().getId(),
-                            1)
-                    .orElseThrow();
+            return verseRepository.findByBookAndChapterAndVerse(book.getId(), nextChapter.get().getId(), 1)
+                    .map(this::verseToDto)
+                    .orElseThrow(() -> new IllegalStateException("Verse not found in the next chapter"));
         }
 
-        // If the chapter is last, find next verse in next book
-        Book nextBook = findNextBook(book.getSequence()).orElseThrow();
-        Chapter nextBookChapter = findChapter(nextBook.getId(), 1).orElseThrow();
-        return findVerse(
-                        nextBook.getId(),
-                        nextBookChapter.getId(),
-                        1)
-                .orElseThrow();
+        // 3. If not found, find the first verse of the first chapter of the next book
+        Book nextBook = bookRepository.findTopBySequenceGreaterThanOrderBySequenceAsc(book.getSequence())
+                .or(bookRepository::findTopByOrderBySequenceAsc)
+                .orElseThrow(() -> new IllegalStateException("Next book not found"));
+
+        return chapterRepository.findByBookIdAndOrdinal(nextBook.getId(), 1)
+                .flatMap(firstChapter -> verseRepository.findByBookAndChapterAndVerse(nextBook.getId(), firstChapter.getId(), 1))
+                .map(this::verseToDto)
+                .orElseThrow(() -> new IllegalStateException("Verse not found in the next book"));
     }
 
-    public Verse findEndVerseOfRange(Verse currentVerse, int verseCount, int leftThreshold) {
+    @Override
+    public VerseDto findEndVerseOfRange(long verseId, int verseCount, int leftThreshold) {
+        Verse currentVerse = verseRepository.findById(verseId)
+                .orElseThrow(() -> new IllegalArgumentException("Verse not found with id: " + verseId));
+
         Chapter currentChapter = currentVerse.getChapter();
         Book currentBook = currentChapter.getBook();
         int lastVerseOrdinal = verseRepository.countVersesByChapter(currentChapter.getId());
 
-        // 현재 book과 chapter 내에서 endVerse가 있는지 확인
-        Optional<Verse> afterVerse = verseRepository.findByBookAndChapterAndVerse(
-                currentBook.getId(),
-                currentChapter.getId(),
-                currentVerse.getOrdinal() + verseCount - 1);
+        int targetOrdinal = currentVerse.getOrdinal() + verseCount - 1;
 
-        // 현재 chapter의 절 바깥에 있으면 마지막 절 반환
-        if (afterVerse.isEmpty()) {
-            return verseRepository.findByBookAndChapterAndVerse(
-                            currentBook.getId(),
-                            currentChapter.getId(),
-                            lastVerseOrdinal)
-                    .orElseThrow();
-        }
-
-        // 해당 장의 남은 절의 수가 threshold보다 적으면, 그냥 남은 절 전부를 범위에 포함시킨다
+        // If the remaining verses are within the threshold, return the last verse of the chapter
         if (lastVerseOrdinal - currentVerse.getOrdinal() <= leftThreshold) {
-            if (afterVerse.get().getOrdinal() != lastVerseOrdinal) {
-                return verseRepository.findByBookAndChapterAndVerse(
-                                currentBook.getId(),
-                                currentChapter.getId(),
-                                lastVerseOrdinal)
-                        .orElseThrow();
-            }
+            return verseRepository.findByBookAndChapterAndVerse(currentBook.getId(), currentChapter.getId(), lastVerseOrdinal)
+                    .map(this::verseToDto)
+                    .orElseThrow(); // Should not happen
         }
 
-        return afterVerse.get();
+        // Find the target verse
+        return verseRepository.findByBookAndChapterAndVerse(currentBook.getId(), currentChapter.getId(), targetOrdinal)
+                .or(() -> verseRepository.findByBookAndChapterAndVerse(currentBook.getId(), currentChapter.getId(), lastVerseOrdinal))
+                .map(this::verseToDto)
+                .orElseThrow(); // Should not happen
+    }
+
+    private BookDto bookToDto(Book book) {
+        return BookDto.builder()
+                .id(book.getId())
+                .name(book.getName())
+                .abbrKor(book.getAbbrKor())
+                .abbrEng(book.getAbbrEng())
+                .sequence(book.getSequence())
+                .build();
+    }
+
+    private ChapterDto chapterToDto(Chapter chapter) {
+        return ChapterDto.builder()
+                .id(chapter.getId())
+                .ordinal(chapter.getOrdinal())
+                .build();
+    }
+
+    private VerseDto verseToDto(Verse verse) {
+        return VerseDto.builder()
+                .id(verse.getId())
+                .ordinal(verse.getOrdinal())
+                .text(verse.getText())
+                .build();
     }
 }

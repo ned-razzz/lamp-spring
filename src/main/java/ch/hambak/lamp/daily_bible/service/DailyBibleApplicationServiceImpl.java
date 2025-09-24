@@ -1,5 +1,8 @@
 package ch.hambak.lamp.daily_bible.service;
 
+import ch.hambak.lamp.bible.dto.BookDto;
+import ch.hambak.lamp.bible.dto.ChapterDto;
+import ch.hambak.lamp.bible.dto.VerseDto;
 import ch.hambak.lamp.bible.entity.Book;
 import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
@@ -40,7 +43,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
         Chapter currentChapter = startVerse.getChapter();
         Book currentBook = currentChapter.getBook();
 
-        List<Verse> verses = bibleService.findVersesFrom(
+        List<VerseDto> verses = bibleService.findVersesFrom(
                 currentBook.getId(),
                 currentChapter.getId(),
                 startVerse.getOrdinal(),
@@ -72,10 +75,11 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse endVerse = readingPlan.getEndVerse();
-        Verse nextStartVerse = bibleService.findNextVerse(endVerse);
-        Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getCountPerDay(), readingPlan.getVersesLeftThreshold());
-        readingPlan.update(nextStartVerse, nextEndVerse, null, null);
-
+        VerseDto nextStartVerse = bibleService.findNextVerse(endVerse.getId());
+        VerseDto nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse.getId(), readingPlan.getCountPerDay(), readingPlan.getVersesLeftThreshold());
+        Verse startEntity = bibleService.findVerseEntityById(nextStartVerse.getId());
+        Verse endEntity = bibleService.findVerseEntityById(nextEndVerse.getId());
+        readingPlan.update(startEntity, endEntity, null, null);
         log.info("daily bible moves on to the next day");
     }
 
@@ -86,19 +90,20 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     @Transactional
     public void updatePlan(ReadingPlanUpdateRequest updateRequest) {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
-        Book book = bibleService.findBook(updateRequest.getBookAbbr()).orElseThrow();
-        Chapter chapter = bibleService.findChapter(book.getId(), updateRequest.getChapterOrdinal()).orElseThrow();
-        Verse startVerse = bibleService.findVerse(
+        BookDto book = bibleService.findBook(updateRequest.getBookAbbr());
+        ChapterDto chapter = bibleService.findChapter(book.getId(), updateRequest.getChapterOrdinal());
+        VerseDto startVerse = bibleService.findVerse(
                         book.getId(),
                         chapter.getId(),
-                        updateRequest.getVerseOrdinal())
-                .orElseThrow();
+                        updateRequest.getVerseOrdinal());
 
         //끝 절 찯기
         Integer count = (updateRequest.getCountPerDay() != null) ? updateRequest.getCountPerDay() : readingPlan.getCountPerDay();
         Integer threshold = (updateRequest.getVersesLeftThreshold() != null) ? updateRequest.getVersesLeftThreshold() : readingPlan.getVersesLeftThreshold();
-        Verse endVerse = bibleService.findEndVerseOfRange(startVerse, count, threshold);
+        VerseDto endVerse = bibleService.findEndVerseOfRange(startVerse.getId(), count, threshold);
 
-        readingPlan.update(startVerse, endVerse, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
+        Verse startEntity = bibleService.findVerseEntityById(startVerse.getId());
+        Verse endEntity = bibleService.findVerseEntityById(endVerse.getId());
+        readingPlan.update(startEntity, endEntity, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
     }
 }
