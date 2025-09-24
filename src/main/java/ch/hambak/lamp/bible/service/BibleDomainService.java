@@ -22,4 +22,6 @@ public interface BibleDomainService {
     List<Verse> findVersesFrom(long bookId, long chapterId, int startOrdinal, int endOrdinal);
 
     Verse findNextVerse(Verse verse);
+
+    Verse findEndVerseOfRange(Verse currentVerse, int offset, int threshold);
 }

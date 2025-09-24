@@ -16,4 +16,6 @@ public interface VerseRepository {
     List<Verse> findVersesFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal);
 
     Optional<Verse> findLastVerseFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal);
+
+    Integer countVersesByChapter(long chapterId);
 }

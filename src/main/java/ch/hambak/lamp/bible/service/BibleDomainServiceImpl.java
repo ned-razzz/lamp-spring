@@ -6,6 +6,7 @@ import ch.hambak.lamp.bible.entity.Verse;
 import ch.hambak.lamp.bible.repository.BookRepositoryImpl;
 import ch.hambak.lamp.bible.repository.ChapterRepositoryImpl;
 import ch.hambak.lamp.bible.repository.VerseRepositoryImpl;
+import ch.hambak.lamp.daily_bible.entity.GlobalReadingPlan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class BibleDomainServiceImpl implements BibleDomainService {
     }
 
     public int countVerses(long chapterId) {
-        return chapterRepository.countVersesByChapter(chapterId);
+        return verseRepository.countVersesByChapter(chapterId);
     }
 
     public Optional<Verse> findVerse(long bookId, long chapterId, int ordinal) {
@@ -81,5 +82,39 @@ public class BibleDomainServiceImpl implements BibleDomainService {
                         nextBookChapter.getId(),
                         1)
                 .orElseThrow();
+    }
+
+    public Verse findEndVerseOfRange(Verse currentVerse, int verseCount, int leftThreshold) {
+        Chapter currentChapter = currentVerse.getChapter();
+        Book currentBook = currentChapter.getBook();
+        int lastVerseOrdinal = verseRepository.countVersesByChapter(currentChapter.getId());
+
+        // 현재 book과 chapter 내에서 endVerse가 있는지 확인
+        Optional<Verse> afterVerse = verseRepository.findByBookAndChapterAndVerse(
+                currentBook.getId(),
+                currentChapter.getId(),
+                currentVerse.getOrdinal() + verseCount - 1);
+
+        // 현재 chapter의 절 바깥에 있으면 마지막 절 반환
+        if (afterVerse.isEmpty()) {
+            return verseRepository.findByBookAndChapterAndVerse(
+                            currentBook.getId(),
+                            currentChapter.getId(),
+                            lastVerseOrdinal)
+                    .orElseThrow();
+        }
+
+        // 해당 장의 남은 절의 수가 threshold보다 적으면, 그냥 남은 절 전부를 범위에 포함시킨다
+        if (lastVerseOrdinal - currentVerse.getOrdinal() <= leftThreshold) {
+            if (afterVerse.get().getOrdinal() != lastVerseOrdinal) {
+                return verseRepository.findByBookAndChapterAndVerse(
+                                currentBook.getId(),
+                                currentChapter.getId(),
+                                lastVerseOrdinal)
+                        .orElseThrow();
+            }
+        }
+
+        return afterVerse.get();
     }
 }

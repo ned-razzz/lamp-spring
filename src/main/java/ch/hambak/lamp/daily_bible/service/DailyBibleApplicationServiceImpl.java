@@ -73,7 +73,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse endVerse = readingPlan.getEndVerse();
         Verse nextStartVerse = bibleService.findNextVerse(endVerse);
-        Verse nextEndVerse = findVerseAfter(nextStartVerse, readingPlan.getCountPerDay());
+        Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getCountPerDay(), readingPlan.getVersesLeftThreshold());
         readingPlan.update(nextStartVerse, nextEndVerse, null, null);
 
         log.info("daily bible moves on to the next day");
@@ -95,41 +95,10 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
                 .orElseThrow();
 
         //끝 절 찯기
-        Integer count = Objects.requireNonNullElse(updateRequest.getCountPerDay(), readingPlan.getCountPerDay());
-        Verse endVerse = findVerseAfter(startVerse, count);
+        Integer count = (updateRequest.getCountPerDay() != null) ? updateRequest.getCountPerDay() : readingPlan.getCountPerDay();
+        Integer threshold = (updateRequest.getVersesLeftThreshold() != null) ? updateRequest.getVersesLeftThreshold() : readingPlan.getVersesLeftThreshold();
+        Verse endVerse = bibleService.findEndVerseOfRange(startVerse, count, threshold);
 
         readingPlan.update(startVerse, endVerse, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
-    }
-
-    //todo: bible service로 이동
-    private Verse findVerseAfter(Verse currentVerse, int offset) {
-        GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
-        Chapter currentChapter = currentVerse.getChapter();
-        Book currentBook = currentChapter.getBook();
-        int lastVerseOrdinal = bibleService.countVerses(currentChapter.getId());
-
-        Optional<Verse> afterVerse = bibleService.findVerse(currentBook.getId(),
-                currentChapter.getId(),
-                currentVerse.getOrdinal() + offset - 1);
-
-        // 성경 읽기 범위의 끝 절이 해당 장의 절 길이를 초과했을 시, 장의 마지막 절 반환
-        if (afterVerse.isEmpty()) {
-            return bibleService.findVerse(currentBook.getId(),
-                            currentChapter.getId(),
-                            lastVerseOrdinal)
-                    .orElseThrow();
-        }
-
-        // 해당 장의 남은 절의 수가 3개 이하일 시 그냥 남은 절까지 전부 범위에 포함시킨다
-        if (lastVerseOrdinal - currentVerse.getOrdinal() <= readingPlan.getVersesLeftThreshold()) {
-            if (afterVerse.get().getOrdinal() != lastVerseOrdinal) {
-                return bibleService.findVerse(currentBook.getId(),
-                                currentChapter.getId(),
-                                lastVerseOrdinal)
-                        .orElseThrow();
-            }
-        }
-
-        return afterVerse.get();
     }
 }

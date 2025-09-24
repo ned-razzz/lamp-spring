@@ -16,6 +16,4 @@ public interface ChapterRepository {
     List<Chapter> findByBookId(Long bookId);
 
     Integer countByBookId(Long bookId);
-
-    Integer countVersesByChapter(long chapterId);
 }

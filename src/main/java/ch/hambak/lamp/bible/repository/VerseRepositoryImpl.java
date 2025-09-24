@@ -76,4 +76,17 @@ public class VerseRepositoryImpl implements VerseRepository {
                 .getResultStream()
                 .findFirst();
     }
+
+    @Override
+    public Integer countVersesByChapter(long chapterId) {
+        String jpql = """
+            SELECT COUNT(v)
+            FROM Verse v JOIN v.chapter c
+            WHERE c.id = :chapterId
+            """;
+        return em.createQuery(jpql, Long.class)
+                .setParameter("chapterId", chapterId)
+                .getSingleResult()
+                .intValue();
+    }
 }
