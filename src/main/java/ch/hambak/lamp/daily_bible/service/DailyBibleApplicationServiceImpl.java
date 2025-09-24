@@ -67,7 +67,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
      * - 절 -> 장 -> 책 순으로 넘어가며, 성경 전체를 다 읽으면 창세기로 순환합니다.
      * - 이 메소드는 스케줄러에 의해 매일 자정에 호출되어야 합니다.
      */
-    @Scheduled(cron = "3 0 0 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 2 * * ?", zone = "Asia/Seoul")
     @Transactional
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
@@ -75,6 +75,8 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
         Verse nextStartVerse = bibleService.findNextVerse(endVerse);
         Verse nextEndVerse = findVerseAfter(nextStartVerse, readingPlan.getCountPerDay());
         readingPlan.update(nextStartVerse, nextEndVerse, null, null);
+
+        log.info("daily bible moves on to the next day");
     }
 
     /**
