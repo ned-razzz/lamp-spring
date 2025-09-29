@@ -21,7 +21,7 @@ public class DailyBibleController {
     }
 
     @PatchMapping("/admin/update")
-    public void patchReadingPlan(@RequestBody ReadingPlanUpdateRequest updateRequest) {
+    public void patchReadingPlan(@RequestBody @Valid ReadingPlanUpdateRequest updateRequest) {
         dailyBibleService.updatePlan(updateRequest);
     }
 

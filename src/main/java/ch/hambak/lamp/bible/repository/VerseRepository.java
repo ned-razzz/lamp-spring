@@ -13,9 +13,11 @@ public interface VerseRepository {
 
     Optional<Verse> findByBookAndChapterAndVerse(Long bookId, Long chapterId, Integer ordinal);
 
+    Optional<Verse> findByBibleIndex(String abbr, Integer chapterOrdinal, Integer verseOrdinal);
+
     List<Verse> findVersesFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal);
 
-    Optional<Verse> findLastVerseFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal);
+    List<Verse> findVersesFrom(String abbr, Integer chapterOrdinal, Integer startOrdinal, Integer endOrdinal);
 
     Integer countVersesByChapter(long chapterId);
 }

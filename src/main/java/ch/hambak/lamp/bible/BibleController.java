@@ -2,7 +2,9 @@ package ch.hambak.lamp.bible;
 
 import ch.hambak.lamp.bible.dto.BookResponse;
 import ch.hambak.lamp.bible.dto.VerseResponse;
+import ch.hambak.lamp.bible.dto.VersesRangeParam;
 import ch.hambak.lamp.bible.service.BibleApplicationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +29,19 @@ public class BibleController {
     @GetMapping("/books/{abbr}/chapters/{chapter}/verses/range")
     public List<VerseResponse> getVerses(
             @PathVariable String abbr,
-            @PathVariable Short chapter,
-            @RequestParam Short startVerse,
-            @RequestParam Short endVerse) {
-        return bibleService.readVersesRange(abbr, chapter, startVerse, endVerse);
+            @PathVariable int chapter,
+            @ModelAttribute @Valid VersesRangeParam rangeParam) {
+        if (rangeParam.getStartVerse() > rangeParam.getEndVerse()) {
+            throw new IllegalArgumentException("Invalid Verse Range");
+        }
+        return bibleService.readVersesRange(abbr, chapter, rangeParam.getStartVerse(), rangeParam.getEndVerse());
     }
 
     @GetMapping("/books/{abbr}/chapters/{chapter}/verses/{verse}")
     public VerseResponse getVerse(
             @PathVariable String abbr,
-            @PathVariable Short chapter,
-            @PathVariable Short verse) {
+            @PathVariable int chapter,
+            @PathVariable int verse) {
         return bibleService.readVerse(abbr, chapter, verse);
     }
 }

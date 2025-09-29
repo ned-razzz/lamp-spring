@@ -37,7 +37,6 @@ public class GlobalReadingPlan {
         this.startVerse = startVerse;
         this.endVerse = endVerse;
 
-        //todo: Assert 구문으로 대체하기
         if (countPerDay != null) {
             this.countPerDay = countPerDay;
         }

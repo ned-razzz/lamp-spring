@@ -27,26 +27,29 @@ public class GlobalControllerAdvice {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler
     public void handleNoHandlerFoundException(NoResourceFoundException e) {
-        log.error("Invalid URL: {}", e.getMessage());
+        log.error("Invalid URL: {}", e.getMessage(), e);
 
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler
-    public void handleNoSuchElementException(NoSuchElementException e) {
-        log.warn("Resource not found: {}", e.getMessage());
+    public Map<String, String> handleNoSuchElementException(NoSuchElementException e) {
+        log.warn("Resource not found: {}", e.getMessage(), e);
+        Map<String, String> error = new HashMap<>();
+        error.put("error", e.getMessage());
+        return error;
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
     public void handleIllegalArgumentException(IllegalArgumentException e) {
-        log.error("Invalid argument: {}", e.getMessage());
+        log.error("Invalid argument: {}", e.getMessage(), e);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
     public Map<String, String> handleJsonBindingError(HttpMessageNotReadableException e) {
-        log.error("Invalid json body: {}", e.getMessage());
+        log.error("Invalid json body: {}", e.getMessage(), e);
         Map<String, String> error = new HashMap<>();
         error.put("error", "Invalid request body");
         return error;
@@ -55,7 +58,7 @@ public class GlobalControllerAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
     public Map<String, String> handleBeanValidation(MethodArgumentNotValidException e) {
-        log.error("Invalid request body: {}", e.getMessage());
+        log.error("Invalid request body: {}", e.getMessage(), e);
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach((error) -> {
             // FieldError인 경우에만 필드명을 키로 사용
@@ -73,6 +76,6 @@ public class GlobalControllerAdvice {
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler
     public void handleIllegalStateException(IllegalStateException e) {
-        log.warn("Illegal state: {}", e.getMessage());
+        log.warn("Illegal state: {}", e.getMessage(), e);
     }
 }

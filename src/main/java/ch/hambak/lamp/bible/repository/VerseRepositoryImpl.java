@@ -27,8 +27,8 @@ public class VerseRepositoryImpl implements VerseRepository {
     public Optional<Verse> findByBookAndChapterAndVerse(Long bookId, Long chapterId, Integer ordinal) {
         String jpql = """
                 SELECT v
-                FROM Verse v JOIN v.chapter c
-                WHERE c.book.id = :bookId
+                FROM Verse v JOIN v.chapter c JOIN c.book b
+                WHERE b.id = :bookId
                 AND c.id = :chapterId
                 AND v.ordinal = :verse
                 """;
@@ -40,11 +40,27 @@ public class VerseRepositoryImpl implements VerseRepository {
                 .findFirst();
     }
 
+    public Optional<Verse> findByBibleIndex(String abbr, Integer chapterOrdinal, Integer verseOrdinal) {
+        String jpql = """
+                SELECT v
+                FROM Verse v JOIN v.chapter c JOIN c.book b
+                WHERE b.abbrEng = :abbr
+                AND c.ordinal = :chapter
+                AND v.ordinal = :verse
+                """;
+        return em.createQuery(jpql, Verse.class)
+                .setParameter("abbr", abbr)
+                .setParameter("chapter", chapterOrdinal)
+                .setParameter("verse", verseOrdinal)
+                .getResultStream()
+                .findFirst();
+    }
+
     public List<Verse> findVersesFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal) {
         String jpql = """
                 SELECT v
-                FROM Verse v JOIN v.chapter c
-                WHERE c.book.id = :bookId
+                FROM Verse v JOIN v.chapter c JOIN c.book b
+                WHERE b.id = :bookId
                 AND c.id = :chapterId
                 AND v.ordinal BETWEEN :startVerse AND :endVerse
                 ORDER BY v.ordinal ASC
@@ -58,11 +74,29 @@ public class VerseRepositoryImpl implements VerseRepository {
                 .getResultList();
     }
 
+    public List<Verse> findVersesFrom(String abbr, Integer chapterOrdinal, Integer startOrdinal, Integer endOrdinal) {
+        String jpql = """
+                SELECT v
+                FROM Verse v JOIN v.chapter c JOIN c.book b
+                WHERE b.abbrEng = :bookAbbr
+                AND c.ordinal = :chapterOrdinal
+                AND v.ordinal BETWEEN :startVerse AND :endVerse
+                ORDER BY v.ordinal ASC
+                """;
+
+        return em.createQuery(jpql, Verse.class)
+                .setParameter("bookAbbr", abbr)
+                .setParameter("chapterOrdinal", chapterOrdinal)
+                .setParameter("startVerse", startOrdinal)
+                .setParameter("endVerse", endOrdinal)
+                .getResultList();
+    }
+
     public Optional<Verse> findLastVerseFrom(Long bookId, Long chapterId, Integer startOrdinal, Integer endOrdinal) {
         String jpql = """
                 SELECT v
-                FROM Verse v JOIN v.chapter c
-                WHERE c.book.id = :bookId
+                FROM Verse v JOIN v.chapter c JOIN c.book b
+                WHERE b.id = :bookId
                 AND c.id = :chapterId
                 AND v.ordinal BETWEEN :startVerse AND :endVerse
                 ORDER BY v.ordinal DESC

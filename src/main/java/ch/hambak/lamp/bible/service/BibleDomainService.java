@@ -1,8 +1,7 @@
 package ch.hambak.lamp.bible.service;
 
-import ch.hambak.lamp.bible.dto.BookDto;
-import ch.hambak.lamp.bible.dto.ChapterDto;
-import ch.hambak.lamp.bible.dto.VerseDto;
+import ch.hambak.lamp.bible.entity.Book;
+import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
 
 import java.util.List;
@@ -17,19 +16,21 @@ public interface BibleDomainService {
      */
     Verse findVerseEntityById(Long verseId);
 
-    BookDto findBook(String abbr);
+    Book findBook(String abbr);
 
-    BookDto findNextBook(int currentSequence);
+    Book findNextBook(int currentSequence);
 
-    ChapterDto findChapter(long bookId, int ordinal);
+    Chapter findChapter(long bookId, int ordinal);
 
     int countVerses(long chapterId);
 
-    VerseDto findVerse(long bookId, long chapterId, int ordinal);
+    Verse findVerse(long bookId, long chapterId, int ordinal);
+    Verse findVerse(String bookAbbr, int chapterOrdinal, int verseOrdinal);
 
-    List<VerseDto> findVersesFrom(long bookId, long chapterId, int startOrdinal, int endOrdinal);
+    List<Verse> findVersesFrom(long bookId, long chapterId, int startOrdinal, int endOrdinal);
+    List<Verse> findVersesFrom(String bookAbbr, int chapterOrdinal, int startOrdinal, int endOrdinal);
 
-    VerseDto findNextVerse(long verseId);
+    Verse findNextVerse(Verse verse);
 
-    VerseDto findEndVerseOfRange(long verseId, int verseCount, int leftThreshold);
+    Verse findEndVerseOfRange(Verse startVerse, int verseCount, int leftThreshold);
 }
