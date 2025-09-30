@@ -56,7 +56,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     public void advanceToNextDay() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse nextStartVerse = bibleService.findNextVerse(readingPlan.getEndVerse());
-        Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getCountPerDay(), readingPlan.getVersesLeftThreshold());
+        Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getAmountPerDay(), readingPlan.getThreshold());
         readingPlan.update(nextStartVerse, nextEndVerse, null, null);
         log.info("daily bible moves on to the next day");
     }
@@ -69,10 +69,10 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
                 updateRequest.getChapterOrdinal(),
                 updateRequest.getVerseOrdinal());
 
-        //끝 절 찯기
-        Integer count = (updateRequest.getCountPerDay() != null) ? updateRequest.getCountPerDay() : readingPlan.getCountPerDay();
-        Integer threshold = (updateRequest.getVersesLeftThreshold() != null) ? updateRequest.getVersesLeftThreshold() : readingPlan.getVersesLeftThreshold();
-        Verse endVerse = bibleService.findEndVerseOfRange(startVerse, count, threshold);
+            //끝 절 찯기
+            Integer count = (updateRequest.getAmountPerDay() != null) ? updateRequest.getAmountPerDay() : readingPlan.getAmountPerDay();
+            Integer threshold = (updateRequest.getThreshold() != null) ? updateRequest.getThreshold() : readingPlan.getThreshold();
+            Verse endVerse = bibleService.findEndVerseOfRange(startVerse, count, threshold);
 
         readingPlan.update(startVerse, endVerse, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
     }

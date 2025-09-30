@@ -2,10 +2,13 @@ package ch.hambak.lamp.daily_bible.entity;
 
 import ch.hambak.lamp.bible.entity.Verse;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Check(constraints = "count_per_day >= 1")
@@ -14,15 +17,15 @@ import org.hibernate.annotations.Check;
 public class GlobalReadingPlan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "global_reading_plan_id")
     private Long id;
 
     @Column(nullable = false)
-    private Integer countPerDay;
+    private Integer amountPerDay;
 
     @Column(nullable = false)
-    private Integer versesLeftThreshold;
+    private Integer threshold;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "start_verse_id")
@@ -32,17 +35,48 @@ public class GlobalReadingPlan {
     @JoinColumn(name = "end_verse_id")
     private Verse endVerse;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ReadingPlanStatus status;
+
+    @Column
+    @PastOrPresent
+    private LocalDateTime created;
+
+    @Column
+    @PastOrPresent
+    private LocalDateTime updated;
+
     //== Business Logic ==//
-    public void update(Verse startVerse, Verse endVerse, Integer countPerDay, Integer chapterTailThreshold) {
+    public static GlobalReadingPlan create(Verse startVerse, Verse endVerse, int amountPerDay, int threshold) {
+        GlobalReadingPlan readingPlan = new GlobalReadingPlan();
+        readingPlan.id = 1L;
+        readingPlan.startVerse = startVerse;
+        readingPlan.endVerse = endVerse;
+        readingPlan.amountPerDay = amountPerDay;
+        readingPlan.threshold = threshold;
+        readingPlan.status = ReadingPlanStatus.ACTIVE;
+        readingPlan.created = LocalDateTime.now();
+        readingPlan.updated = LocalDateTime.now();
+        return readingPlan;
+    }
+
+    public void update(Verse startVerse, Verse endVerse, Integer amountPerDay, Integer threshold) {
         this.startVerse = startVerse;
         this.endVerse = endVerse;
+        this.updated = LocalDateTime.now();
 
-        if (countPerDay != null) {
-            this.countPerDay = countPerDay;
+        if (amountPerDay != null) {
+            this.amountPerDay = amountPerDay;
         }
 
-        if (chapterTailThreshold != null) {
-            this.versesLeftThreshold = chapterTailThreshold;
+        if (threshold != null) {
+            this.threshold = threshold;
         }
+    }
+
+    public void delete() {
+        this.status = ReadingPlanStatus.DELETED;
+        this.updated = LocalDateTime.now();
     }
 }

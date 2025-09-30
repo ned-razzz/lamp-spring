@@ -1,9 +1,6 @@
 package ch.hambak.lamp.daily_bible.dto;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,19 +10,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReadingPlanUpdateRequest {
 
-    @NotBlank
     @Size(max = 5)
     private String bookAbbr;
 
-    @NotNull
+    @Positive
     private Integer chapterOrdinal;
 
-    @NotNull
+    @Positive
     private Integer verseOrdinal;
 
-    @Min(1)
-    private Integer countPerDay;
+    @Positive
+    private Integer amountPerDay;
 
-    @Min(1)
-    private Integer versesLeftThreshold;
+    @Positive
+    private Integer threshold;
 }

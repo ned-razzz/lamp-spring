@@ -36,6 +36,8 @@ public class MemberApplicationServiceImpl implements MemberApplicationService {
     @Override
     @Transactional
     public void deleteMember(Long id) {
-        memberRepository.findById(id).ifPresent(Member::delete);
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("active member of id %d is not exist.".formatted(id)));
+        member.delete();
     }
 }
