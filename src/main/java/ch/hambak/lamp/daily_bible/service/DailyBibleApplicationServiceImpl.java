@@ -64,6 +64,26 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
 
     @Transactional
     @Override
+    public void createPlan(ReadingPlanCreateRequest createRequest) {
+        // find start verse and end verse
+        BibleIndex bibleIndex = createRequest.getBibleIndex();
+        Verse startVerse = bibleService.findVerse(
+                bibleIndex.getBookAbbr(),
+                bibleIndex.getChapterOrdinal(),
+                bibleIndex.getVerseOrdinal());
+        Verse endVerse = bibleService.findEndVerseOfRange(startVerse, createRequest.getAmountPerDay(), createRequest.getThreshold());
+
+        // insert reading plan record
+        GlobalReadingPlan readingPlan = GlobalReadingPlan.create(
+                startVerse,
+                endVerse,
+                createRequest.getAmountPerDay(),
+                createRequest.getThreshold());
+        readingPlanRepository.save(readingPlan);
+    }
+
+    @Transactional
+    @Override
     public void updatePlan(ReadingPlanUpdateRequest updateRequest) {
         GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity()
                 .orElseThrow(() -> new NoSuchElementException("Global reading plan does not exist"));

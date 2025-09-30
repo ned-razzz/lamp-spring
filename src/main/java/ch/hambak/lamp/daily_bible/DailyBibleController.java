@@ -1,5 +1,6 @@
 package ch.hambak.lamp.daily_bible;
 
+import ch.hambak.lamp.daily_bible.dto.ReadingPlanCreateRequest;
 import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
 import ch.hambak.lamp.daily_bible.service.DailyBibleApplicationService;
@@ -18,6 +19,11 @@ public class DailyBibleController {
     @GetMapping("/today")
     public TodayBibleResponse getDailyBible() {
         return dailyBibleService.readTodayVerses();
+    }
+
+    @PostMapping("/admin/create")
+    public void postReadingPlan(@RequestBody @Valid ReadingPlanCreateRequest createRequest) {
+        dailyBibleService.createPlan(createRequest);
     }
 
     @PatchMapping("/admin/update")

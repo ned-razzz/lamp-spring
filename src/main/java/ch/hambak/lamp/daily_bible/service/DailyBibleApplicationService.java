@@ -1,5 +1,6 @@
 package ch.hambak.lamp.daily_bible.service;
 
+import ch.hambak.lamp.daily_bible.dto.ReadingPlanCreateRequest;
 import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
 import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
 
@@ -21,6 +22,8 @@ public interface DailyBibleApplicationService {
      * - 이 메소드는 스케줄러에 의해 매일 자정에 호출되어야 합니다.
      */
     void advanceToNextDay();
+
+    void createPlan(ReadingPlanCreateRequest createRequest);
 
     /**
      * 관리자가 전체 읽기 진도의 현재 위치와 하루 분량을 강제로 설정합니다.
