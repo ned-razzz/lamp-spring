@@ -14,13 +14,14 @@ public class MemberController {
     private final MemberApplicationService memberApplicationService;
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/admin/create")
+    @PostMapping("/admin")
     public void createMember(@RequestBody @Valid MemberCreateRequest createRequest) {
         memberApplicationService.registerMember(createRequest);
     }
+
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping("/admin/delete/{memberId}")
-    public void createMember(@PathVariable Long memberId) {
+    @DeleteMapping("/admin/{memberId}")
+    public void deleteMember(@PathVariable Long memberId) {
         memberApplicationService.deleteMember(memberId);
     }
 }
