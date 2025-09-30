@@ -11,7 +11,7 @@ import org.hibernate.annotations.Check;
 import java.time.LocalDateTime;
 
 @Entity
-@Check(constraints = "count_per_day >= 1")
+@Check(constraints = "amount_per_day >= 1")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GlobalReadingPlan {

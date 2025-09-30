@@ -26,7 +26,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
 
     @Override
     public TodayBibleResponse readTodayVerses() {
-        GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
+        GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity().orElseThrow();
         Verse startVerse = readingPlan.getStartVerse();
         Verse endVerse = readingPlan.getEndVerse();
         Chapter currentChapter = startVerse.getChapter();

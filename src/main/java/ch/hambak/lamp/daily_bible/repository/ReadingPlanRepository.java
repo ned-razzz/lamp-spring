@@ -7,5 +7,5 @@ import java.util.Optional;
 public interface ReadingPlanRepository {
     Long save(GlobalReadingPlan readingPlan);
 
-    Optional<GlobalReadingPlan> find();
+    Optional<GlobalReadingPlan> findWithAllBibleEntity();
 }

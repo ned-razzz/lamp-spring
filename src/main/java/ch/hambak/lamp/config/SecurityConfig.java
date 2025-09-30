@@ -18,7 +18,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // 비밀번호 암호화를 위한 BCryptPasswordEncoder를 Bean으로 등록합니다.
+        // Register BCryptPasswordEncoder as a bean for password encryption.
         return new BCryptPasswordEncoder();
     }
 
@@ -26,58 +26,58 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // REST API 환경이므로 CSRF 보호 비활성화
+                // Disable CSRF protection as it's a REST API environment
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // HTTP Basic 인증 비활성화
+                // Disable HTTP Basic authentication
                 .httpBasic(AbstractHttpConfigurer::disable)
 
-                // HTTP 요청에 대한 인가 규칙 설정
+                // Configure authorization rules for HTTP requests
                 .authorizeHttpRequests(auth -> auth
-                        // "/admin/**" 경로는 "ADMIN" 역할을 가진 사용자만 접근 가능
+                        // Only users with the "ADMIN" role can access "/api/*/*/admin/**"
                         .requestMatchers("/api/*/*/admin/**").hasRole("ADMIN")
-                        // 그 외의 모든 요청은 인증 여부와 관계없이 모두 허용
+                        // All other requests are permitted regardless of authentication
                         .anyRequest().permitAll()
                 )
 
-                // 폼 기반 로그인 설정
+                // Configure form-based login
                 .formLogin(form -> form
-                        // 로그인 요청을 처리할 URL (별도 컨트롤러 구현 필요 없음)
+                        // URL to process the login request (no separate controller implementation needed)
                         .loginProcessingUrl("/api/login")
-                        // 로그인 성공 시 응답 핸들러
+                        // Response handler for successful login
                         .successHandler((request, response, authentication) -> {
                             log.info("Login Successful. User: {}", authentication.getName());
                             response.setStatus(HttpStatus.OK.value());
                         })
-                        // 로그인 실패 시 응답 핸들러
+                        // Response handler for failed login
                         .failureHandler((request, response, exception) -> {
                             log.warn("Login Failed from {}: {}", request.getRemoteAddr(), exception.getMessage());
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                         })
                 )
 
-                // 로그아웃 설정
+                // Configure logout
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
                         .logoutSuccessHandler(((request, response, authentication) -> {
                             String username = (authentication != null) ? authentication.getName() : "anonymous";
-                            log.info("Logout Successful. User: {}", username); // 콘솔에 로그 출력
-                            response.setStatus(HttpStatus.OK.value()); // 상태 코드만 전송
+                            log.info("Logout Successful. User: {}", username); // Log to console
+                            response.setStatus(HttpStatus.OK.value()); // Send only the status code
                         }))
                 )
 
-                // 인증 및 인가 예외 처리
+                // Configure exception handling for authentication and authorization
                 .exceptionHandling(e -> e
-                        // 인증되지 않은 사용자가 보호된 리소스에 접근 시 처리
+                        // Handles access to protected resources by unauthenticated users
                         .authenticationEntryPoint((request, response, authException) -> {
-                            log.warn("Unauthorized access attempt from {}: {}", request.getRemoteAddr(), authException.getMessage()); // 콘솔에 로그 출력
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드만 전송
+                            log.warn("Unauthorized access attempt from {}: {}", request.getRemoteAddr(), authException.getMessage()); // Log to console
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value()); // Send only the status code
                         })
-                        // 인증은 되었으나 권한이 없는 리소스에 접근 시 처리
+                        // Handles access to resources by authenticated users without the required permissions
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             String username = (request.getUserPrincipal() != null) ? request.getUserPrincipal().getName() : "anonymous";
-                            log.warn("Access Denied for user {} to {}: {}", username, request.getRequestURI(), accessDeniedException.getMessage()); // 콘솔에 로그 출력
-                            response.setStatus(HttpStatus.FORBIDDEN.value()); // 상태 코드만 전송
+                            log.warn("Access Denied for user {} to {}: {}", username, request.getRequestURI(), accessDeniedException.getMessage()); // Log to console
+                            response.setStatus(HttpStatus.FORBIDDEN.value()); // Send only the status code
                         })
                 );
 

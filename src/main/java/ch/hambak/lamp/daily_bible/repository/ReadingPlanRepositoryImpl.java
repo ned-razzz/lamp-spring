@@ -17,7 +17,7 @@ public class ReadingPlanRepositoryImpl implements ReadingPlanRepository {
         return readingPlan.getId();
     }
 
-    public Optional<GlobalReadingPlan> find() {
+    public Optional<GlobalReadingPlan> findWithAllBibleEntity() {
         String jpql = """
                 SELECT p
                 FROM GlobalReadingPlan p
