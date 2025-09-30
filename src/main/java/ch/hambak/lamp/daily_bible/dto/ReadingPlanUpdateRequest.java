@@ -10,14 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReadingPlanUpdateRequest {
 
-    @Size(max = 5)
-    private String bookAbbr;
-
-    @Positive
-    private Integer chapterOrdinal;
-
-    @Positive
-    private Integer verseOrdinal;
+    private BibleIndex bibleIndex;
 
     @Positive
     private Integer amountPerDay;

@@ -4,9 +4,7 @@ import ch.hambak.lamp.bible.entity.Book;
 import ch.hambak.lamp.bible.entity.Chapter;
 import ch.hambak.lamp.bible.entity.Verse;
 import ch.hambak.lamp.bible.service.BibleDomainService;
-import ch.hambak.lamp.daily_bible.dto.DailyVerseResponse;
-import ch.hambak.lamp.daily_bible.dto.ReadingPlanUpdateRequest;
-import ch.hambak.lamp.daily_bible.dto.TodayBibleResponse;
+import ch.hambak.lamp.daily_bible.dto.*;
 import ch.hambak.lamp.daily_bible.entity.GlobalReadingPlan;
 import ch.hambak.lamp.daily_bible.repository.ReadingPlanRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,6 +24,7 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     private final ReadingPlanRepository readingPlanRepository;
     private final BibleDomainService bibleService;
 
+    @Override
     public TodayBibleResponse readTodayVerses() {
         GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
         Verse startVerse = readingPlan.getStartVerse();
@@ -53,27 +53,39 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
 
     @Scheduled(cron = "0 0 2 * * ?", zone = "Asia/Seoul")
     @Transactional
+    @Override
     public void advanceToNextDay() {
-        GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
+        GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity().orElseThrow();
         Verse nextStartVerse = bibleService.findNextVerse(readingPlan.getEndVerse());
         Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getAmountPerDay(), readingPlan.getThreshold());
-        readingPlan.update(nextStartVerse, nextEndVerse, null, null);
+        readingPlan.updateRange(nextStartVerse, nextEndVerse);
         log.info("daily bible moves on to the next day");
     }
 
     @Transactional
+    @Override
     public void updatePlan(ReadingPlanUpdateRequest updateRequest) {
-        GlobalReadingPlan readingPlan = readingPlanRepository.find().orElseThrow();
-        Verse startVerse = bibleService.findVerse(
-                updateRequest.getBookAbbr(),
-                updateRequest.getChapterOrdinal(),
-                updateRequest.getVerseOrdinal());
+        GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity()
+                .orElseThrow(() -> new NoSuchElementException("Global reading plan does not exist"));
 
-            //끝 절 찯기
+        // update detail columns
+        readingPlan.updateDetails(updateRequest.getAmountPerDay(), updateRequest.getThreshold());
+
+        // update verse range columns
+        BibleIndex bibleIndex = updateRequest.getBibleIndex();
+        if (bibleIndex != null) {
+            // find start verse
+            Verse startVerse = bibleService.findVerse(
+                    bibleIndex.getBookAbbr(),
+                    bibleIndex.getChapterOrdinal(),
+                    bibleIndex.getVerseOrdinal());
+
+            // find end verse
             Integer count = (updateRequest.getAmountPerDay() != null) ? updateRequest.getAmountPerDay() : readingPlan.getAmountPerDay();
             Integer threshold = (updateRequest.getThreshold() != null) ? updateRequest.getThreshold() : readingPlan.getThreshold();
             Verse endVerse = bibleService.findEndVerseOfRange(startVerse, count, threshold);
 
-        readingPlan.update(startVerse, endVerse, updateRequest.getCountPerDay(), updateRequest.getVersesLeftThreshold());
+            readingPlan.updateRange(startVerse, endVerse);
+        }
     }
 }

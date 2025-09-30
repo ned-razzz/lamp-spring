@@ -61,18 +61,20 @@ public class GlobalReadingPlan {
         return readingPlan;
     }
 
-    public void update(Verse startVerse, Verse endVerse, Integer amountPerDay, Integer threshold) {
+    public void updateRange(Verse startVerse, Verse endVerse) {
         this.startVerse = startVerse;
         this.endVerse = endVerse;
         this.updated = LocalDateTime.now();
+    }
 
+    public void updateDetails(Integer amountPerDay, Integer threshold) {
         if (amountPerDay != null) {
             this.amountPerDay = amountPerDay;
         }
-
         if (threshold != null) {
             this.threshold = threshold;
         }
+        this.updated = LocalDateTime.now();
     }
 
     public void delete() {
