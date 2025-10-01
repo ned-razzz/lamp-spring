@@ -1,5 +1,6 @@
 package ch.hambak.lamp.config;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -69,6 +70,19 @@ public class GlobalControllerAdvice {
             else {
                 errors.put(error.getObjectName(), error.getDefaultMessage());
             }
+        });
+        return errors;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler
+    public Map<String, String> handleBeanValidationField(ConstraintViolationException e) {
+        log.error("Invalid path-variable or request-param", e);
+        Map<String, String> errors = new HashMap<>();
+        e.getConstraintViolations().forEach(violation -> {
+            String fullPath = violation.getPropertyPath().toString();
+            String fieldName = fullPath.substring(fullPath.lastIndexOf(".") + 1);
+            errors.put(fieldName, violation.getMessage());
         });
         return errors;
     }

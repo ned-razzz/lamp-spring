@@ -5,15 +5,15 @@ import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
+import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 
 @Entity
-@SQLRestriction("status = 'ACTIVE'")
+@Table(name = "member")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
+public class AdminMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
@@ -41,22 +41,10 @@ public class Member {
     @PastOrPresent
     private LocalDateTime updated;
 
-    //== Business Logic ==//
-    public static Member create(String email, String password, Role role) {
-        Member member = new Member();
-        member.email = email;
-        member.password = password;
-        member.role = role;
-        member.status = MemberStatus.PENDING;
-        member.created = LocalDateTime.now();
-        member.updated = LocalDateTime.now();
-        return member;
-    }
-
-    public void update(String email, String password, Role role) {
-        this.email = email;
-        this.password = password;
-        this.role = role;
+    public void approvePendingMember() {
+        Assert.state(this.status == MemberStatus.PENDING,
+                "the status of the member is not PENDING: %s".formatted(this.email));
+        this.status = MemberStatus.ACTIVE;
         this.updated = LocalDateTime.now();
     }
 

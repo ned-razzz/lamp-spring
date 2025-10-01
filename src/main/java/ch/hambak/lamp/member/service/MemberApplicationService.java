@@ -4,10 +4,16 @@ import ch.hambak.lamp.member.dto.MemberCreateRequest;
 
 public interface MemberApplicationService {
     /**
-     * 새로운 회원을 등록합니다.
+     * 새로운 회원을 등록 신청합니다.
      * @param createRequest 회원 가입에 필요한 정보를 담은 DTO
      */
-    void registerMember(MemberCreateRequest createRequest);
+    void requestMembership(MemberCreateRequest createRequest);
+
+    /**
+     * 등록 신청한 회원을 승인합니다.
+     * @param email 신청한 회원의 이메일
+     */
+    void approveMembership(String email);
 
     /**
      * ID를 이용해 회원을 삭제합니다.
