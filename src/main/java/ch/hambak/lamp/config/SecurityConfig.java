@@ -26,8 +26,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // Enable CSRF protection as it's a REST API environment based on session-cookie login
-//                .csrf(AbstractHttpConfigurer::disable)
+                // Disable CSRF protection
+                .csrf(AbstractHttpConfigurer::disable)
 
                 // Disable HTTP Basic authentication
                 .httpBasic(AbstractHttpConfigurer::disable)
