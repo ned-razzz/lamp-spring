@@ -26,28 +26,24 @@ public class BibleDomainServiceImpl implements BibleDomainService {
     private final VerseRepository verseRepository;
 
     @Override
-    public Verse findVerseEntityById(Long verseId) {
-        return verseRepository.findById(verseId)
-                .orElseThrow();
+    public Optional<Verse> findVerseEntityById(Long verseId) {
+        return verseRepository.findById(verseId);
     }
 
     @Override
-    public Book findBook(String abbr) {
-        return bookRepository.findByAbbr(abbr)
-                .orElseThrow();
+    public Optional<Book> findBook(String abbr) {
+        return bookRepository.findByAbbr(abbr);
     }
 
     @Override
-    public Book findNextBook(int currentSequence) {
+    public Optional<Book> findNextBook(int currentSequence) {
         return bookRepository.findTopBySequenceGreaterThanOrderBySequenceAsc(currentSequence)
-                .or(bookRepository::findTopByOrderBySequenceAsc)
-                .orElseThrow();
+                .or(bookRepository::findTopByOrderBySequenceAsc);
     }
 
     @Override
-    public Chapter findChapter(long bookId, int ordinal) {
-        return chapterRepository.findByBookIdAndOrdinal(bookId, ordinal)
-                .orElseThrow();
+    public Optional<Chapter> findChapter(long bookId, int ordinal) {
+        return chapterRepository.findByBookIdAndOrdinal(bookId, ordinal);
     }
 
     @Override
@@ -56,15 +52,13 @@ public class BibleDomainServiceImpl implements BibleDomainService {
     }
 
     @Override
-    public Verse findVerse(long bookId, long chapterId, int ordinal) {
-        return verseRepository.findByBookAndChapterAndVerse(bookId, chapterId, ordinal)
-                .orElseThrow();
+    public Optional<Verse> findVerse(long bookId, long chapterId, int ordinal) {
+        return verseRepository.findByBookAndChapterAndVerse(bookId, chapterId, ordinal);
     }
 
     @Override
-    public Verse findVerse(String bookAbbr, int chapterOrdinal, int verseOrdinal) {
-        return verseRepository.findByBibleIndex(bookAbbr, chapterOrdinal, verseOrdinal)
-                .orElseThrow();
+    public Optional<Verse> findVerse(String bookAbbr, int chapterOrdinal, int verseOrdinal) {
+        return verseRepository.findByBibleIndex(bookAbbr, chapterOrdinal, verseOrdinal);
     }
 
     @Override
@@ -78,31 +72,25 @@ public class BibleDomainServiceImpl implements BibleDomainService {
     }
 
     @Override
-    public Verse findNextVerse(Verse verse) {
+    public Optional<Verse> findNextVerse(Verse verse) {
         Chapter chapter = verse.getChapter();
         Book book = chapter.getBook();
 
         // 1. Find next verse in the same chapter
         return verseRepository.findByBookAndChapterAndVerse(book.getId(), chapter.getId(), verse.getOrdinal()+1)
                 // 2. If not found, find the first verse of the next chapter
-                .or(() -> findFirstVerseInNextChapter(book, chapter, verse))
+                .or(() -> findFirstVerseInNextChapter(book, chapter))
                 // 3. If not found, find the first verse of the first chapter of the next book
-                .or(() -> findFirstVerseInNextBook(book, chapter, verse))
-                .orElseThrow(() -> new NoSuchElementException("The next verse could not be found."));
+                .or(() -> findFirstVerseInNextBook(book));
     }
 
-    private Optional<Verse> findFirstVerseInNextChapter(Book book, Chapter chapter, Verse verse) {
+    private Optional<Verse> findFirstVerseInNextChapter(Book book, Chapter chapter) {
         return verseRepository.findByBibleIndex(book.getAbbrEng(), chapter.getOrdinal()+1, 1);
     }
 
-    private Optional<Verse> findFirstVerseInNextBook(Book book, Chapter chapter, Verse verse) {
-        try {
-            Book nextBook = findNextBook(book.getSequence());
-            return chapterRepository.findByBookIdAndOrdinal(nextBook.getId(), 1)
-                    .flatMap(firstChapter -> verseRepository.findByBookAndChapterAndVerse(nextBook.getId(), firstChapter.getId(), 1));
-        } catch (NoSuchElementException e) {
-            return Optional.empty();
-        }
+    private Optional<Verse> findFirstVerseInNextBook(Book book) {
+        return findNextBook(book.getSequence())
+                .flatMap(nextBook -> findVerse(nextBook.getAbbrEng(), 1, 1));
     }
 
     @Override

@@ -55,8 +55,10 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
     @Transactional
     @Override
     public void advanceToNextDay() {
-        GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity().orElseThrow();
-        Verse nextStartVerse = bibleService.findNextVerse(readingPlan.getEndVerse());
+        GlobalReadingPlan readingPlan = readingPlanRepository.findWithAllBibleEntity()
+                .orElseThrow(() -> new NoSuchElementException("Global reading plan does not exist"));
+        Verse nextStartVerse = bibleService.findNextVerse(readingPlan.getEndVerse())
+                .orElseThrow(() -> new NoSuchElementException("Next start verse of daily bible does not exist"));
         Verse nextEndVerse = bibleService.findEndVerseOfRange(nextStartVerse, readingPlan.getAmountPerDay(), readingPlan.getThreshold());
         readingPlan.updateRange(nextStartVerse, nextEndVerse);
         log.info("daily bible moves on to the next day");
@@ -70,7 +72,8 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
         Verse startVerse = bibleService.findVerse(
                 bibleIndex.getBookAbbr(),
                 bibleIndex.getChapterOrdinal(),
-                bibleIndex.getVerseOrdinal());
+                bibleIndex.getVerseOrdinal())
+                .orElseThrow(() -> new NoSuchElementException("Start verse does not exist"));
         Verse endVerse = bibleService.findEndVerseOfRange(startVerse, createRequest.getAmountPerDay(), createRequest.getThreshold());
 
         // insert reading plan record
@@ -98,7 +101,8 @@ public class DailyBibleApplicationServiceImpl implements DailyBibleApplicationSe
             Verse startVerse = bibleService.findVerse(
                     bibleIndex.getBookAbbr(),
                     bibleIndex.getChapterOrdinal(),
-                    bibleIndex.getVerseOrdinal());
+                    bibleIndex.getVerseOrdinal())
+                    .orElseThrow(() -> new NoSuchElementException("Start verse does not exist"));
 
             // find end verse
             Integer count = (updateRequest.getAmountPerDay() != null) ? updateRequest.getAmountPerDay() : readingPlan.getAmountPerDay();
